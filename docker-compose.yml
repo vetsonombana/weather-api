@@ -1,0 +1,14 @@
+version: "3"
+services:
+  cache:
+    image: "redis:alpine3.20"
+    ports:
+      - "6379:6379"
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - ".env.docker"
+    depends_on:
+      - "cache"
