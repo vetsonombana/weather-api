@@ -4,7 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx jest src",
+    "test:cov": "npx jest src --coverage",
     "build": "npx tsc",
     "start": "node dist/index.js",
     "dev": "npx nodemon -r dotenv/config index.ts "
@@ -13,11 +14,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.13",
     "@types/node": "^22.7.4",
     "dotenv": "^16.4.5",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.7",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   },

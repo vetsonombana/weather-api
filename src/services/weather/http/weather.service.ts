@@ -8,15 +8,17 @@ import {
   ForecastWeather,
   ForecastWeatherData,
 } from "../../../types/weather/forecast";
+import { TForecastService } from "../../forecast/forecast.service";
 
 export type TWeatherHttpService = {
-  getCurrent: (location: string) => Promise<CurrentWeatherData>;
-  getForecast: (location: string) => Promise<ForecastWeatherData[]>;
+  getCurrent: (location: string) => Promise<unknown>;
+  getForecast: (location: string) => Promise<unknown>;
 };
 
 export const WeatherHttpService = (
   axios: Axios,
-  redis: RedisClientType
+  redis: RedisClientType,
+  forecastService: TForecastService
 ): TWeatherHttpService => {
   return {
     getCurrent: async (location: string) => {
@@ -24,7 +26,14 @@ export const WeatherHttpService = (
         const { data } = await axios.get<CurrentWeather>(
           `/current?city=${location}`
         );
-        const current = data.data[0];
+        const weather = data.data[0];
+        const current = {
+          description: weather.weather.description,
+          temperature: weather.temp,
+          wind_speed: weather.wind_spd,
+          humidity: weather.rh,
+        };
+
         await redis.set(
           `current-${location.toLowerCase()}`,
           JSON.stringify(current),
@@ -40,9 +49,22 @@ export const WeatherHttpService = (
     getForecast: async (location: string) => {
       try {
         const { data } = await axios.get<ForecastWeather>(
-          `/forecast/daily?city=${location}&day=7`
+          `/forecast/daily?city=${location}&days=7`
         );
-        const forecast = data.data;
+
+        const weathers = data.data;
+        const summarized = forecastService.summarize(weathers);
+        const forecast = {
+          temperature_trend: forecastService.getTrend(
+            summarized.temperature_trend
+          ),
+          pressure_trend: forecastService.getTrend(summarized.pressure_trend),
+          general_trend: forecastService.getTrend(
+            (summarized.temperature_trend + summarized.pressure_trend) / 2
+          ),
+          wind_speed_avg: summarized.sum_wind_speed / weathers.length,
+        };
+
         await redis.set(
           `forecast-${location.toLowerCase()}`,
           JSON.stringify(forecast),
